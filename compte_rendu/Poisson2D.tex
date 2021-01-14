@@ -1,0 +1,40 @@
+\documentclass{article}
+
+\usepackage[latin1]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{graphicx}
+\usepackage{geometry}
+\usepackage{amsmath,amsfonts,amssymb}
+
+\geometry{hmargin=2.5cm,vmargin=1.5cm}
+\author{J.PERDIGON}
+
+\begin{document}
+
+\title{PPSC2020F - Projet I}
+\maketitle
+
+\newcommand{\xv}{\textbf{x}}
+
+
+\section{Introduction}
+
+On considère le problème de Poisson à 2 dimensions avec des conditions aux bords de Dirichlet homogènes
+\begin{equation}
+  \begin{split}
+  -\Delta u(\xv) = f(\xv) \ , \ \xv \in \Omega = (0,1) \times (0,1) \\
+  u(\xv) = 0 \ , \ \xv \in \partial \Omega
+  \end{split}
+\end{equation}
+On choisit d'approximer le problème à l'aide de différences finies. L'espace est discrétisé en une grille uniforme de ($n+1$) points dans chaque direction avec le pas de grille $h = 1/n$. L'opérateur Laplacien $\Delta$ est quand à lui approximé par:
+\begin{equation}
+  \Delta u(\xv) \approx \frac{u_{i+1,j} - 2u_{i,j} + u_{i-1,j}}{h^2} + \frac{u_{i,j+1} - 2u_{i,j} + u_{i,j-1}}{h^2}
+\end{equation}
+Où $u_{i,j} \approx  u(\xv_{i,j})$ représente une approximation discrete de la solution, sur la grille d'espace définie précédemment. $u_{i,j}$ peut être représenté sous la forme d'une matrice $U$, de taille $(n-1) \times (n-1)$ et dont les indices $i$ et $j$ sont respectivement les indices de lignes et de colonnes (). 
+
+
+
+
+
+\end{document}
