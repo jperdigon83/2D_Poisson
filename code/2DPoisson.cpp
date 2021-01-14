@@ -199,7 +199,7 @@ public:
     for(std::size_t i=0; i<m_; ++i){
       for(std::size_t j=0; j<m_; ++j){
 	
-	file << u_[i][j] << std::endl;; 
+	file << u_[i][j] << std::endl;
       }
     }
     
@@ -227,16 +227,14 @@ private:
 
 };
 
-
-
-int main(){
-
-  const std::size_t n = 128;
-
+int main(int argc, char** argv){
+  
+  const std::size_t N = atoi(argv[1]);
+  
   TwoDPoisson test(n);
 
-  const char* filename = "sol_f=1.dat";
+  const char* filename = "../result.dat";
   test.saveU(filename);
-  
-  
+
+  return 0; 
 }

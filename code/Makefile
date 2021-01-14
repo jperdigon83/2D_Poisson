@@ -1,6 +1,5 @@
 #Makefile for 2DPoisson code
 
-
 CXX = g++
 TARGET = 2DPoisson
 N = 128 # Number of points in one direction of space
