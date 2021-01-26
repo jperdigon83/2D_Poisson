@@ -16,25 +16,98 @@
 \maketitle
 
 \newcommand{\xv}{\textbf{x}}
+\newcommand{\xt}{\tilde{x}}
+\newcommand{\yt}{\tilde{y}}
+\newcommand{\xvt}{\tilde{\xv}}
+\newcommand{\Ut}{\tilde{U}}
+\newcommand{\Ft}{\tilde{F}}
 
 
 \section{Introduction}
 
-On considère le problème de Poisson à 2 dimensions avec des conditions aux bords de Dirichlet homogènes
+On considère le problème de Poisson à 2 dimensions avec des conditions aux bords de Dirichlet
 \begin{equation}
   \begin{split}
-  -\Delta u(\xv) = f(\xv) \ , \ \xv \in \Omega = (0,1) \times (0,1) \\
-  u(\xv) = 0 \ , \ \xv \in \partial \Omega
+  -\Delta_\xv u(\xv) = f(\xv) \ , \ \xv \in \Omega = (0,L_x) \times (0,L_y) \\
+  u(\xv) = \alpha(\xv) \ , \ \xv \in \partial \Omega
   \end{split}
 \end{equation}
-On choisit d'approximer le problème à l'aide de différences finies. L'espace est discrétisé en une grille uniforme de ($n+1$) points dans chaque direction avec le pas de grille $h = 1/n$. L'opérateur Laplacien $\Delta$ est quand à lui approximé par:
+Dans un premier temps, on peut réécrire le problème en effectuant les changements de variables
 \begin{equation}
-  \Delta u(\xv) \approx \frac{u_{i+1,j} - 2u_{i,j} + u_{i-1,j}}{h^2} + \frac{u_{i,j+1} - 2u_{i,j} + u_{i,j-1}}{h^2}
+  \xv = (L_x\xt,L_y\yt) \ , \  \xt = \frac{x}{L_x} \ , \ \yt = \frac{y}{L_y}
 \end{equation}
-Où $u_{i,j} \approx  u(\xv_{i,j})$ représente une approximation discrete de la solution, sur la grille d'espace définie précédemment. $u_{i,j}$ peut être représenté sous la forme d'une matrice $U$, de taille $(n-1) \times (n-1)$ et dont les indices $i$ et $j$ sont respectivement les indices de lignes et de colonnes (). 
+L'opérateur de Laplace se réécrit ainsi
+\begin{equation}
+  -\Delta_\xv u(\xvt) = \frac{1}{L_x^2} \partial_{\xt}^2 u + \frac{1}{L_y^2} \partial_{\yt}^2 u
+\end{equation}
+On choisit d'approximer le problème à l'aide de différences finies. L'espace est discrétisé en une grille uniforme de ($n+1$) points dans chaque direction avec le pas de grille $h = 1/n$. L'opérateur Laplacien $\Delta$ est quant à lui approximé par:
+\begin{equation}
+  \Delta_{\xv} u(\xvt) \approx \frac{1}{L_x^2} \frac{u_{i+1,j} - 2u_{i,j} + u_{i-1,j}}{h^2} +  \frac{1}{L_y^2} \frac{u_{i,j+1} - 2u_{i,j} + u_{i,j-1}}{h^2}
+\end{equation}
+Où $u_{i,j}$ représente une approximation discrete de la solution, sur la grille d'espace définie précédemment. $u_{i,j}$ peut être représenté sous la forme d'une matrice $U$, de taille $m \times m$ ($ m = (n-1)$) et dont les indices $i$ et $j$ sont respectivement les indices de lignes et de colonnes. Le problème se réécrit sous forme matricielle
+\begin{equation}
+ \frac{1}{L_x^2} T U + \frac{1}{L_y^2} U T =  h^2 F \label{eq:mat}
+\end{equation}
+Où U et T sont définies comme:
+\begin{equation}
+  U =
+  \begin{pmatrix}
+    u_{1,1} & \cdots & \cdots & \cdots & u_{1,n-1} \\
+    \vdots & \ddots &  &  & \vdots \\
+    \vdots &  & u_{i,j} &  & \vdots \\
+    \vdots &  &  & \ddots & \vdots \\
+    u_{n-1,1} &  \cdots & \cdots & \cdots & u_{n-1,n-1} \\
+  \end{pmatrix}
+  \ , \ T =
+  \begin{pmatrix}
+    2 & -1 & 0 & \cdots & 0 \\
+    -1 & 2 & -1 &  & \vdots \\
+    0 & \ddots & \ddots & \ddots & 0 \\
+    \vdots &  & -1 & 2 & -1 \\
+    0 &  \cdots & 0 & -1 & 2 \\
+  \end{pmatrix}
+\end{equation}
+Les matrices $T$ et $F$ sont respectivement la matrice de Laplace unidimensionnelle et la matrice associée au membre de droite. A noter que l'implémentation des conditions aux bords a été absorbée dans la définition de la matrice F,
+\begin{equation}
+  F =
+  \begin{pmatrix}
+     f_{1,1} + \frac{\alpha_{0,1}}{L_x^2} + \frac{\alpha_{1,0}}{L_y^2}  & f_{1,2} + \frac{\alpha_{0,2}}{L_x^2}  & \cdots  & f_{1,n-2} + \frac{\alpha_{0,n-2}}{L_x^2} &  f_{1,n-1} + \frac{\alpha_{0,n-1}}{L_x^2} + \frac{\alpha_{1,n}}{L_y^2} \\
+     f_{2,1} + \frac{\alpha_{2,0}}{L_y^2} &  & \vdots  &  & f_{2,n-1} + \frac{\alpha_{2,n}}{L_y^2}  \\
+    \vdots &  \cdots & f_{i,j} & \cdots & \vdots \\
+     f_{n-2,1} + \frac{\alpha_{n-2,0}}{L_y^2} &  & \vdots  &  & f_{n-2,n-1} + \frac{\alpha_{n-2,n}}{L_y^2}  \\
+     f_{n-1,1} + \frac{\alpha_{n,1}}{L_x^2} + \frac{\alpha_{n-1,0}}{L_y^2} & f_{n-1,2} + \frac{\alpha_{n,2}}{L_x^2} & \cdots &  f_{n-1,n-2} + \frac{\alpha_{n,n-2}}{L_x^2} & f_{n-1,n-1} + \frac{\alpha_{n,n-1}}{L_x^2} + \frac{\alpha_{n-1,n}}{L_y^2}  \\
+  \end{pmatrix}
+\end{equation}
+Pour résoudre le système (\ref{eq:mat}), on peut utiliser une méthode itérative. Cependant, il existe une méthode directe de résolution, en remarquant que l'on connaît les valeurs propres ainsi que les vecteurs propres de l'opérateur de Laplace associé à la matrice $T$
+\begin{equation}
+  T \ s_i = \lambda_i \ s_i \ , \ s_i = [\sin(i \pi h), \sin(2 i \pi h), ..., \sin(m \pi h)]^T \ , \ \lambda_i = 4 \sin(\frac{i \pi h}{2})^2 \ , \ i=1,...,m \label{eq:vec_val_propre}
+\end{equation}
+Les vecteurs propres $\left\lbrace S_i \right\rbrace$ forment les colonnes de la matrice $S$. L'équation (\ref{eq:vec_val_propre}) se réécrit ainsi
+\begin{equation}
+  T S = D S\ , \ S = [s_1^T, s_2^T, ..., s_m^T] \ , \ D = diag(\lambda_1, \lambda_2, ..., \lambda_m)
+\end{equation}
+La matrice $S$ est symétrique ($S^T = S$) et orthogonale à un facteur près ($S^T S = S^2 = 1/2h \ I$). Ainsi, en décomposant la solution $U$ dans la base formée par les vecteurs propres de $T$ ($ U = S^T \Ut S$), l'équation (\ref{eq:mat}) se réécrit
+\begin{equation}
+  \frac{1}{L_x^2} T S^T \Ut S + \frac{1}{L_y^2} S^T \Ut S  T = h^2 F
+\end{equation}
+En multipliant à gauche et à droite de chaque terme par la matrice $S$
+\begin{equation}
+  \frac{1}{L_x^2} S T S \Ut S^2 +  \frac{1}{L_y^2} S^2 \Ut S T S = h^2 \Ft
+\end{equation}
+Où $\Ft = S F S $. En utilisant $T S = D S = S D$ ($S$ symétrique), on obtient
+\begin{equation}
+  \frac{1}{L_x^2} S^2 D \Ut S^2 + \frac{1}{L_y^2} S^2 \Ut S^2 D = h^2 \Ft
+\end{equation}
+Finalement, on obtient l'équation pour $\Ut$ en utilisant $S^2 = 1/2h \ I$,
+\begin{equation}
+   \frac{1}{L_x^2} D \Ut  + \frac{1}{L_y^2} \Ut D = 4 h^4  \Ft \ \leftrightarrow \ \Ut_{i,j} = 4 h^4 \frac{\Ft_{i,j}}{\frac{\lambda_i}{L_x^2} + \frac{\lambda_j}{L_y^2}} = 4 h^4 L_x^2 L_y^2 \frac{\Ft_{i,j}}{L_y^2\lambda_i+ L_x^2\lambda_j}
+\end{equation}
+Ainsi, en se donnant une matrice $F$ de taille $(m,m)$, il faut effectuer 4 produits matriciels ($4 m^3$ opérations) et un produit de matrices terme à terme (produit d'Hadamard en $m^2$ opérations) pour obtenir la solution $U$.
 
+\section{Implementation numérique}
 
 
 
 
 \end{document}
+

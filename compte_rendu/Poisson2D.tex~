@@ -16,19 +16,67 @@
 \maketitle
 
 \newcommand{\xv}{\textbf{x}}
+\newcommand{\xt}{\tilde{x}}
+\newcommand{\yt}{\tilde{y}}
+\newcommand{\xvt}{\tilde{\xv}}
+
 
 \section{Introduction}
 
-On considère le problème de Poisson à 2 dimensions avec des conditions aux bords de Dirichlet homogènes
+On considère le problème de Poisson à 2 dimensions avec des conditions aux bords de Dirichlet
 \begin{equation}
   \begin{split}
-  -\Delta u(\xv) = f(\xv) \ , \ \xv \in \Omega = (0,1) \times (0,1) \\
-  u(\xv) = 0 \ , \ \xv \in \partial \Omega
+  -\Delta_\xv u(\xv) = f(\xv) \ , \ \xv \in \Omega = (0,L_x) \times (0,L_y) \\
+  u(\xv) = \alpha(\xv) \ , \ \xv \in \partial \Omega
   \end{split}
 \end{equation}
-On choisit d'approximer le problème à l'aide de différences finies. L'espace est discrétisé en une grille uniforme de ($n+1$) points dans chaque direction avec le pas de grille $h = 1/n$. L'opérateur Laplacien $\Delta$ est quand à lui approximé par un schéma
+Dans un premier temps, on peut réécrire le problème en effectuant les changements de variables
+\begin{equation}
+  \xv = (L_x\xt,L_y\yt) \ , \  \xt = \frac{x}{L_x} \ , \ \yt = \frac{y}{L_y}
+\end{equation}
+L'opérateur de Laplace se réécrit ainsi
+\begin{equation}
+  -\Delta_\xv u(\xv) = \frac{1}{L_x^2} \partial_{\xt}^2 u + \frac{1}{L_y^2} \partial_{\yt}^2 u
+  \end{equation}
 
-
+On choisit d'approximer le problème à l'aide de différences finies. L'espace est discrétisé en une grille uniforme de ($n+1$) points dans chaque direction avec le pas de grille $h = 1/n$. L'opérateur Laplacien $\Delta$ est quant à lui approximé par:
+\begin{equation}
+  \Delta u(\xvt) \approx  \frac{1}{L_x^2} \frac{u_{i+1,j} - 2u_{i,j} + u_{i-1,j}}{h^2} +  \frac{1}{L_y^2} \frac{u_{i,j+1} - 2u_{i,j} + u_{i,j-1}}{h^2}
+\end{equation}
+Où $u_{i,j}$ représente une approximation discrete de la solution, sur la grille d'espace définie précédemment. $u_{i,j}$ peut être représenté sous la forme d'une matrice $U$, de taille $m \times m$ ($ m = (n-1)$) et dont les indices $i$ et $j$ sont respectivement les indices de lignes et de colonnes. L'équation précédente se réécrit sous forme matricielle
+\begin{equation}
+  \frac{1}{L_x^2} T U + \frac{1}{L_y^2} U T = h^2 F
+\end{equation}
+\begin{equation}
+  U =
+  \begin{pmatrix}
+    u_{1,1} & \cdots & \cdots & \cdots & u_{1,n-1} \\
+    \vdots & \ddots &  &  & \vdots \\
+    \vdots &  & u_{i,j} &  & \vdots \\
+    \vdots &  &  & \ddots & \vdots \\
+    u_{n-1,1} &  \cdots & \cdots & \cdots & u_{n-1,n-1} \\
+  \end{pmatrix}
+  \ , \ T =
+  \begin{pmatrix}
+    2 & -1 & 0 & \cdots & 0 \\
+    -1 & 2 & -1 &  & \vdots \\
+    0 & \ddots & \ddots & \ddots & 0 \\
+    \vdots &  & -1 & 2 & -1 \\
+    0 &  \cdots & 0 & -1 & 2 \\
+  \end{pmatrix}
+\end{equation}
+Les matrices $T$ et $F$ sont respectivement la matrice de Laplace unidimensionnelle et la matrice associée au membre de droite. A noter que l'implémentation des conditions aux bords a été absorbée dans la définition de la matrice F,
+\begin{equation}
+  F =
+  \begin{pmatrix}
+     f_{1,1} + \frac{\alpha_{0,1}}{L_x^2} + \frac{\alpha_{1,0}}{L_y^2}  & f_{1,2} + \frac{\alpha_{0,2}}{L_x^2}  & \cdots  & f_{1,n-2} + \frac{\alpha_{0,n-2}}{L_x^2} &  f_{1,n-1} + \frac{\alpha_{0,n-1}}{L_x^2} + \frac{\alpha_{1,n}}{L_y^2} \\
+     f_{2,1} + \frac{\alpha_{2,0}}{L_y^2} &  & \vdots  &  & f_{2,n-1} + \frac{\alpha_{2,n}}{L_y^2}  \\
+    \vdots &  \cdots & f_{i,j} & \cdots & \vdots \\
+     f_{n-2,1} + \frac{\alpha_{n-2,0}}{L_y^2} &  & \vdots  &  & f_{n-2,n-1} + \frac{\alpha_{n-2,n}}{L_y^2}  \\
+     f_{n-1,1} + \frac{\alpha_{n,1}}{L_x^2} + \frac{\alpha_{n-1,0}}{L_y^2} & f_{n-1,2} + \frac{\alpha_{n,2}}{L_x^2} & \cdots &  f_{n-1,n-2} + \frac{\alpha_{n,n-2}}{L_x^2} & f_{n-1,n-1} + \frac{\alpha_{n,n-1}}{L_x^2} + \frac{\alpha_{n-1,n}}{L_y^2}  \\
+  \end{pmatrix}
+\end{equation}
+Pour résoudre 
 
 
 \end{document}
