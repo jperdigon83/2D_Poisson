@@ -3,12 +3,14 @@
 CXX = g++
 TARGET = 2DPoisson
 N = 128 # Number of points in one direction of space
+Lx = 1. # Number of points in one direction of space
+Ly = 1. # Number of points in one direction of space
 
 TARGET: 2DPoisson.cpp
 	g++ -o $(TARGET) 2DPoisson.cpp
 
 run:
-	./$(TARGET) $(N)
+	./$(TARGET) $(N) $(Lx) $(Ly)
 clean:
 	@echo "Deleting the executable"
 	rm -f $(TARGET)

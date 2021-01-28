@@ -175,7 +175,7 @@ private:
 
 
 
-inline double ** FFT(std::size_t N, double * x){
+inline double ** FFT(std::size_t N, double * &x){
 
   double ** z = new double*[2]; // Complex vector
   z[0] = new double[N]; // real part
@@ -208,11 +208,11 @@ inline double ** FFT(std::size_t N, double * x){
 
     for(std::size_t k =0; k<(N/2); ++k){
       
-      z[0][k] = z_even[0][k] + cos(2*M_PI*k/N)*z_odd[0][k];
-      z[1][k] = z_even[1][k] - sin(2*M_PI*k/N)*z_odd[1][k];
+      z[0][k] = z_even[0][k] + cos(2*M_PI*k/N)*z_odd[0][k] + sin(2*M_PI*k/N)*z_odd[1][k];
+      z[1][k] = z_even[1][k] + cos(2*M_PI*k/N)*z_odd[1][k] - sin(2*M_PI*k/N)*z_odd[0][k];
 
-      z[0][k+N/2] = z_even[0][k] - cos(2*M_PI*k/N)*z_odd[0][k];
-      z[1][k+N/2] = z_even[1][k] + sin(2*M_PI*k/N)*z_odd[1][k];
+      z[0][k+N/2] = z_even[0][k] - cos(2*M_PI*k/N)*z_odd[0][k] - sin(2*M_PI*k/N)*z_odd[1][k];
+      z[1][k+N/2] = z_even[1][k] - cos(2*M_PI*k/N)*z_odd[1][k] + sin(2*M_PI*k/N)*z_odd[0][k];
       
     }
 
@@ -229,7 +229,7 @@ inline double ** FFT(std::size_t N, double * x){
   
 }
 
-inline void DST(std::size_t N, double * y, double * x){
+inline void DST(std::size_t N, double * &y, double * &x){
 
   int Nl = 2*N+2;
   
@@ -243,10 +243,6 @@ inline void DST(std::size_t N, double * y, double * x){
   
   double ** z = FFT(Nl,xl);
 
-  for(std::size_t i=0; i<Nl; ++i){
-    std::cout << i << " " << z[0][i] << " " << z[1][i] << std::endl;
-  }
-  
   for(std::size_t i=0; i<N; ++i){
     y[i] = -0.5*z[1][i+1];
   }
@@ -280,9 +276,9 @@ int main(int argc, char** argv){
   
   DST(N,y,x);
 
-  // for(std::size_t i =0; i<N; ++i){
-  //   std::cout << i << " " << x[i] << " " << y[i] <<  std::endl;
-  // }
+  for(std::size_t i =0; i<N; ++i){
+    std::cout << i << " " << x[i] << " " << y[i] <<  std::endl;
+  }
 
   delete [] y;
   

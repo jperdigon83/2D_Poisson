@@ -22,7 +22,7 @@ u = np.reshape(test_data['col3'],(m,m))
 Lx = xx[-1,0] + (xx[-1,0]-xx[-2,0])
 Ly = yy[0,-1] + (yy[0,-1]-yy[0,-2])
 uth = np.zeros((m,m))
-K = 10
+K = 20
 
 for i in range(m):
     for j in range(m):
