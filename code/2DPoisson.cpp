@@ -106,9 +106,12 @@ public:
     double lambda[m_];
     
     for(std::size_t i=0; i<m_; ++i){
+      
       lambda[i] = 4*std::pow(sin(0.5*(i+1)*M_PI*h),2);
+      
       for(std::size_t j=0; j<m_; ++j){
-	u_[i][j] = 1.0; 
+	
+	u_[i][j] = 1.0;
       }
     }
 
@@ -216,11 +219,11 @@ int main(int argc, char** argv){
   double ** sol = test.get_U();
 
   
-  // for(int i=0; i<N-1; ++i){  
-  //   delete [] sol[i];
-  // }
+  for(int i=0; i<N-1; ++i){  
+    delete [] sol[i];
+  }
 
-  // delete [] sol;   
+  delete [] sol;   
 
   
   
