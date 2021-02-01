@@ -1,8 +1,8 @@
 #include <iostream>
 #include <cmath>
 #include <fstream>
-
-
+#include<chrono>
+#include<mpi.h>
 
 inline double ** FFT(std::size_t N, double * x){
 
@@ -81,10 +81,13 @@ public:
   
   // Constructeur
 
-  TwoDPoisson(const std::size_t N, const double Lx, const double Ly){
+  TwoDPoisson(const std::size_t N, const double Lx, const double Ly, const int procId, const int nProc){
 
     m_ = N - 1;
     h_ = 1./N;
+
+    const std::size_t  M = m_/nProc;
+    const std::size_t Mr = m_%nProc; 
     
     x_ = new double[m_];
     y_ = new double[m_];
@@ -100,7 +103,7 @@ public:
       
       for(std::size_t j=0; j<m_; ++j){
 	
-	u_[i][j] = -1.0; 
+	u_[i][j] = 1.0; 
       }
     }
 
@@ -149,6 +152,18 @@ public:
   }
 
   // Fonctions
+
+  double getU(const std::size_t i, const std::size_t j){
+    return u_[i][j];
+  }
+
+  double getx(const std::size_t i){
+    return x_[i];
+  }
+
+  double gety(const std::size_t j){
+    return y_[j];
+  }
   
   void saveU(const char* filename) const{
 
@@ -197,7 +212,7 @@ private:
       }
     }
   }
-
+  
   void dst_row(double ** A) const{
     
     for(std::size_t i=0; i<m_; ++i){
@@ -218,18 +233,84 @@ private:
   
 };
 
+
+
+
+/* Function that computes the analytical solution to the Poisson equation, at the grid point (i,j), with the constant fource f=-1. Since the solution is on a series form, it is truncated at given indexes (M,N).
+ */
+
+inline double Utheorique(const std::size_t M, const std::size_t N, const double x, const double y){
+
+  double u = 0;
+  double coeff;
+  
+  for(std::size_t m=1; m<=M; ++m){
+    for(std::size_t n=1; n<=N; ++n){
+      coeff = 4*(1-std::pow(-1,m))*(1-std::pow(-1,n))/((std::pow(m,2)+std::pow(n,2))*m*n*std::pow(M_PI,2));
+      u += coeff * sin(m*x) * sin(n*y);
+    }
+  }
+
+  return u;  
+}
+
+
+
 int main(int argc, char** argv){
-  
-  const std::size_t N = atoi(argv[1]);
-  //const std::size_t Lx = atof(argv[2]);
-  //const std::size_t Ly = atof(argv[3]);
-  const std::size_t Lx = M_PI;
-  const std::size_t Ly = M_PI;
-  
-  TwoDPoisson U1(N, Lx, Ly);
 
-  U1.saveU("res.dat");
+  MPI_Status status;
+  int procId;
+  int nProc;
+  
+  MPI_Init(&argc, &argv);
+  MPI_Comm_rank(MPI_COMM_WORLD, &procId);
+  MPI_Comm_size(MPI_COMM_WORLD, &nProc);
 
   
+
+  const std::size_t N = 128;
+  const double  Lx = M_PI;
+  const double  Ly = M_PI;
+  
+  TwoDPoisson U(N, Lx, Ly, procId, nProc);
+
+  
+  
+  /* This part measures the truncature error and the computation time as a function of N, for the poisson equation with constant f=-1. The error should decrease as N^2, and the time should increase as N^2*log(N).
+   */
+  
+   // std::ofstream file("errL2.dat" ,std::ios::trunc);
+   // file << "#N errL2 t" << std::endl;
+   
+   // for(std::size_t k=3; k<=9; ++k){
+    
+   //   const std::size_t N = std::pow(2,k);
+   //   const std::size_t M = N-1;
+
+   //   std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
+
+   //   TwoDPoisson U(N, Lx, Ly);
+    
+   //   std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
+
+   //   auto duration = std::chrono::duration_cast<std::chrono::microseconds>( t2 - t1 ).count();
+     
+   //   double L2err = 0;
+   //   for(std::size_t i=0; i<M; ++i){
+   //     for(std::size_t j=0; j<M; ++j){
+   // 	 L2err += std::pow(U.getU(i,j) - Utheorique(200,200,U.getx(i),U.gety(j)),2);
+   //     }
+   //   }
+   //   L2err = sqrt( L2err / (M*M) );
+
+   //   std::cout << "N = " << N << " L2err = " <<  L2err << " Elapsed time = "  << duration  << " microsec " << std::endl;
+   //   file << N  << " " << L2err << " " << duration << std::endl;
+
+     
+   // }
+
+   // file.close();
+  
+
   return 0; 
 }
