@@ -2,6 +2,7 @@
 #include <cmath>
 #include <fstream>
 #include<chrono>
+#include<mpi.h>
 
 inline double ** FFT(std::size_t N, double * x){
 
@@ -80,11 +81,17 @@ public:
   
   // Constructeur
 
-  TwoDPoisson(const std::size_t N, const double Lx, const double Ly){
-
+  TwoDPoisson(const std::size_t N, const double Lx, const double Ly, const int procId, const int nProc){
+    
     m_ = N - 1;
     h_ = 1./N;
     
+    nProc_ = nProc;
+    procId_ = procId;
+    
+    M_ = m_/nProc_;
+    Mr_ = m_%nProc_;
+       
     x_ = new double[m_];
     y_ = new double[m_];
     lambda_ = new double[m_];
@@ -98,18 +105,23 @@ public:
       u_[i] = new double[m_];
       
       for(std::size_t j=0; j<m_; ++j){
-	
 	u_[i][j] = 1.0; 
       }
     }
-
+    
     // Produit matriciel: SF = S * F
     
     dst_col(u_);
-    
+    communication_col(u_);
+    MPI_Barrier ( MPI_COMM_WORLD );
+
+
     // Produit matriciel: Ftilde = SFS = SF * S
 
     dst_row(u_);
+    communication_row(u_);
+    MPI_Barrier ( MPI_COMM_WORLD );
+
     
     // Produit Matrice*Matrice = UTilde_ij =  4*h^4 * Lx**2 * Ly**2 *FTilde_ij / (lambda_i + lambda_j)
 
@@ -126,11 +138,16 @@ public:
     // Produit matriciel UtildeS  =  Utilde * S
     
     dst_col(u_);
+    communication_col(u_);
+    MPI_Barrier (MPI_COMM_WORLD );
+
 
     // Produit matriciel U = S * UtildeS
     
     dst_row(u_);
-    
+    communication_row(u_);
+    MPI_Barrier ( MPI_COMM_WORLD );
+
   }
   
   // Destructeur
@@ -182,6 +199,11 @@ private:
   // Variables
   
   std::size_t m_;
+  std::size_t procId_;
+  std::size_t nProc_;
+  std::size_t M_;
+  std::size_t Mr_;
+  
   double h_;
 
   double * x_;
@@ -191,10 +213,54 @@ private:
   double ** u_;
 
   // Fonctions
+
+  void communication_col(double ** A) const{
+
+    double dataOut[m_*m_];
+    
+    if (procId_ != (nProc_ -1)){
+      
+      double dataIn[m_*M_];
+
+      for(std::size_t i=0; i<m_; ++i){
+	for(std::size_t j=M_*procId_; j<M_*(procId_+1); ++j){
+	  dataIn[i*m_+j] = A[i][j];
+	}
+      }
+
+      MPI_Allgather(&dataIn, M_*m_, MPI_DOUBLE, &dataOut, m_*m_, MPI_DOUBLE, MPI_COMM_WORLD);
+ 
+    }else{
+
+      double dataIn[m_*(M_+Mr_)];
+
+      for(std::size_t i=0; i<m_; ++i){
+	for(std::size_t j=M_*procId_; j<M_*(procId_+1)+Mr_; ++j){
+	 dataIn[i*m_+j] = A[i][j];
+	}
+      }
+
+      MPI_Allgather(&dataIn, m_*(M_+Mr_), MPI_DOUBLE, &dataOut, m_*m_, MPI_DOUBLE, MPI_COMM_WORLD);
+      
+    }
+
+    for(std::size_t i=0; i<m_; ++i){
+	for(std::size_t j=0; j<m_; ++j){
+	  A[i][j] = dataOut[i*m_+j]
+	}
+    }
+  
+  }
+
+  void communication_row(double ** A) const{
+     
+  }
   
   void dst_col(double ** A) const{
-    
-    for(std::size_t j=0; j<m_; ++j){
+
+    if (procId_ != (nProc_ -1)){
+
+      for(std::size_t j=M_*procId_; j<M_*(procId_+1); ++j){
        
       double x[m_];
       for(std::size_t i=0; i<m_; ++i){
@@ -207,24 +273,64 @@ private:
 	A[i][j] = x[i];	 
       }
     }
+     
+    }else{
+
+      for(std::size_t j=(M_*procId_); j<M_*(procId_+1)+Mr_; ++j){
+       
+	double x[m_];
+	for(std::size_t i=0; i<m_; ++i){
+	  x[i] = A[i][j];
+	}
+       
+	DST(m_,x);
+
+	for(std::size_t i=0; i<m_; ++i){
+	  A[i][j] = x[i];	 
+	}
+      }
+      
+    }
+  
   }
   
   void dst_row(double ** A) const{
-    
-    for(std::size_t i=0; i<m_; ++i){
-       
-      double x[m_];
-      
-      for(std::size_t j=0; j<m_; ++j){
-	x[j] = A[i][j];
-      }
-       
-      DST(m_,x);
 
-      for(std::size_t j=0; j<m_; ++j){
-	A[i][j] = x[j];	 
-      }   
-    }
+     if (procId_ != (nProc_ -1)){
+
+       for(std::size_t i=(M_*procId_); i<M_*(procId_+1); ++i){
+       
+	 double x[m_];
+      
+	 for(std::size_t j=0; j<m_; ++j){
+	   x[j] = A[i][j];
+	 }
+       
+	 DST(m_,x);
+
+	 for(std::size_t j=0; j<m_; ++j){
+	   A[i][j] = x[j];	 
+	 }   
+       }
+   
+     }else{
+
+       for(std::size_t i=(M_*procId_); i<M_*(procId_+1)+Mr_; ++i){
+       
+	 double x[m_];
+      
+	 for(std::size_t j=0; j<m_; ++j){
+	   x[j] = A[i][j];
+	 }
+       
+	 DST(m_,x);
+
+	 for(std::size_t j=0; j<m_; ++j){
+	   A[i][j] = x[j];	 
+	 }   
+       }
+     }
+     
   }
   
 };
@@ -254,44 +360,57 @@ inline double Utheorique(const std::size_t M, const std::size_t N, const double 
 
 int main(int argc, char** argv){
 
+  MPI_Status status;
+  int procId;
+  int nProc;
+  
+  MPI_Init(&argc, &argv);
+  MPI_Comm_rank(MPI_COMM_WORLD, &procId);
+  MPI_Comm_size(MPI_COMM_WORLD, &nProc);
+
+  const std::size_t N = 128;
   const double  Lx = M_PI;
   const double  Ly = M_PI;
   
+  TwoDPoisson U(N, Lx, Ly, procId, nProc);
+
   /* This part measures the truncature error and the computation time as a function of N, for the poisson equation with constant f=-1. The error should decrease as N^2, and the time should increase as N^2*log(N).
    */
   
-   std::ofstream file("errL2.dat" ,std::ios::trunc);
-   file << "#N errL2 t" << std::endl;
+   // std::ofstream file("errL2.dat" ,std::ios::trunc);
+   // file << "#N errL2 t" << std::endl;
    
-   for(std::size_t k=3; k<=9; ++k){
+   // for(std::size_t k=3; k<=9; ++k){
     
-     const std::size_t N = std::pow(2,k);
-     const std::size_t M = N-1;
+   //   const std::size_t N = std::pow(2,k);
+   //   const std::size_t M = N-1;
 
-     std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
+   //   std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
 
-     TwoDPoisson U(N, Lx, Ly);
+   //   TwoDPoisson U(N, Lx, Ly);
     
-     std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
+   //   std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
 
-     auto duration = std::chrono::duration_cast<std::chrono::microseconds>( t2 - t1 ).count();
+   //   auto duration = std::chrono::duration_cast<std::chrono::microseconds>( t2 - t1 ).count();
      
-     double L2err = 0;
-     for(std::size_t i=0; i<M; ++i){
-       for(std::size_t j=0; j<M; ++j){
-	 L2err += std::pow(U.getU(i,j) - Utheorique(200,200,U.getx(i),U.gety(j)),2);
-       }
-     }
-     L2err = sqrt( L2err / (M*M) );
+   //   double L2err = 0;
+   //   for(std::size_t i=0; i<M; ++i){
+   //     for(std::size_t j=0; j<M; ++j){
+   // 	 L2err += std::pow(U.getU(i,j) - Utheorique(200,200,U.getx(i),U.gety(j)),2);
+   //     }
+   //   }
+   //   L2err = sqrt( L2err / (M*M) );
 
-     std::cout << "N = " << N << " L2err = " <<  L2err << " Elapsed time = "  << duration  << " microsec " << std::endl;
-     file << N  << " " << L2err << " " << duration << std::endl;
+   //   std::cout << "N = " << N << " L2err = " <<  L2err << " Elapsed time = "  << duration  << " microsec " << std::endl;
+   //   file << N  << " " << L2err << " " << duration << std::endl;
 
      
-   }
+   // }
 
-   file.close();
+   // file.close();
+
+
+  MPI_Finalize();
   
-
   return 0; 
 }
