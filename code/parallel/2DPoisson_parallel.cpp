@@ -1,8 +1,10 @@
 #include <iostream>
 #include <cmath>
 #include <fstream>
-#include<chrono>
 #include<mpi.h>
+
+/* Fonction récursive pour calculer la FFT d'un vecteur x (algorithme de Cooley-Tukey).
+ */
 
 inline double ** FFT(std::size_t N, double * x){
 
@@ -50,6 +52,9 @@ inline double ** FFT(std::size_t N, double * x){
   
 }
 
+/* Fonction pour calculer la DST d'un vecteur x à partir de la FFT.
+ */
+
 inline void DST(std::size_t N, double * x){
 
   int Nl = 2*N+2;
@@ -74,6 +79,10 @@ inline void DST(std::size_t N, double * x){
   delete [] z;
 
 }
+
+/* Classe parallélisée pour calculer la solution du problème de Poisson à 2D sur un domaine rectangulaire [0,Lx] x [0,Ly]. Chaque processeur possède une matrice u_ de taille (m_*m_) mais calcule uniquement la DST sur une sous partie des lignes / colonnes. Entre chaque produit matriciel, il y a communication entre les processeurs afin de mettre à jour l'ensemble de la matrice, sur chaque processeur).
+ */
+
 
 class TwoDPoisson{
 
@@ -111,9 +120,9 @@ public:
     
     // Produit matriciel: SF = S * F
     
-    dst_col(u_);
+    dst_col(u_); 
     
-    communication_col(u_);
+    communication_col(u_); 
     
     MPI_Barrier ( MPI_COMM_WORLD );
 
@@ -371,10 +380,7 @@ private:
   
 };
 
-
-
-
-/* Function that computes the analytical solution to the Poisson equation, at the grid point (i,j), with the constant fource f=-1. Since the solution is on a series form, it is truncated at given indexes (M,N).
+/* Solution analytique de l'équation de Poisson  avec  f=-1,  sur le domaine [0,PI] x[0,PI], avec conditions aux bord de Dirichelt u(0,y) = u(x,0) = u(PI,y) = u(x,PI) = 0. Comme la solution est sous la forme d'une série, la solution est tronquée aux termes (M,N);
  */
 
 inline double Utheorique(const std::size_t M, const std::size_t N, const double x, const double y){
@@ -404,6 +410,8 @@ int main(int argc, char** argv){
 
   const double  Lx = M_PI;
   const double  Ly = M_PI;
+
+  
 
   /* For a given number of procs, This part measures and save in a file the computation time as a function of N, for the poisson equation with constant f=-1. 
    */

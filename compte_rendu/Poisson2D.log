@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.20 (TeX Live 2019/Debian) (preloaded format=pdflatex 2021.1.15)  26 JAN 2021 17:38
+This is pdfTeX, Version 3.14159265-2.6-1.40.20 (TeX Live 2019/Debian) (preloaded format=pdflatex 2021.1.15)  3 FEB 2021 16:38
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -288,36 +288,51 @@ LaTeX Font Info:    Trying to load font information for U+msb on input line 16.
 File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 ) [1
 
-{/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}] [2] (./Poisson2D.aux) ) 
+{/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}]
+Overfull \hbox (3.88768pt too wide) detected at line 108
+\OML/cmm/m/it/10 DST\OT1/cmr/m/n/10 (\OT1/cmr/bx/n/10 v\OT1/cmr/m/n/10 )[] = \O
+MS/cmsy/m/n/10 ^^@[] \OML/cmm/m/it/10 Imag []  ;  [] \OT1/cmr/m/n/10 = [0\OML/c
+mm/m/it/10 ; v[]; v[]; :::; v[]; \OT1/cmr/m/n/10 0\OML/cmm/m/it/10 ; \OMS/cmsy/
+m/n/10 ^^@\OML/cmm/m/it/10 v[]; \OMS/cmsy/m/n/10 ^^@\OML/cmm/m/it/10 v[]; :::; 
+\OMS/cmsy/m/n/10 ^^@\OML/cmm/m/it/10 v[]\OT1/cmr/m/n/10 ][] \OML/cmm/m/it/10 ; 
+ k \OT1/cmr/m/n/10 = 0\OML/cmm/m/it/10 ; \OT1/cmr/m/n/10 1\OML/cmm/m/it/10 ; ::
+; N \OMS/cmsy/m/n/10 ^^@ \OT1/cmr/m/n/10 1
+ []
+
+[2] [3] (./Poisson2D.aux) ) 
 Here is how much of TeX's memory you used:
- 4399 strings out of 482577
- 58794 string characters out of 5948912
+ 4418 strings out of 482577
+ 59028 string characters out of 5948912
  318724 words of memory out of 5000000
- 19412 multiletter control sequences out of 15000+600000
- 546390 words of font info for 60 fonts, out of 8000000 for 9000
+ 19426 multiletter control sequences out of 15000+600000
+ 549945 words of font info for 71 fonts, out of 8000000 for 9000
  350 hyphenation exceptions out of 8191
- 30i,17n,35p,435b,425s stack positions out of 5000i,500n,10000p,200000b,80000s
- </
-home/jperdigon/.texlive2019/texmf-var/fonts/pk/ljfour/jknappen/ec/ecbx1000.600p
-k> </home/jperdigon/.texlive2019/texmf-var/fonts/pk/ljfour/jknappen/ec/ecbx0700
-.600pk> </home/jperdigon/.texlive2019/texmf-var/fonts/pk/ljfour/jknappen/ec/ecr
-m1000.600pk> </home/jperdigon/.texlive2019/texmf-var/fonts/pk/ljfour/jknappen/e
-c/ecbx1440.600pk> </home/jperdigon/.texlive2019/texmf-var/fonts/pk/ljfour/jknap
-pen/ec/ecrm1200.600pk> </home/jperdigon/.texlive2019/texmf-var/fonts/pk/ljfour/
-jknappen/ec/ecrm1728.600pk></usr/share/texlive/texmf-dist/fonts/type1/public/am
-sfonts/cm/cmex10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts
-/cm/cmmi10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cm
-mi5.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi7.pfb
-></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/
-share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr5.pfb></usr/share/te
-xlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr7.pfb></usr/share/texlive/te
-xmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/share/texlive/texmf-di
-st/fonts/type1/public/amsfonts/cm/cmsy5.pfb></usr/share/texlive/texmf-dist/font
-s/type1/public/amsfonts/cm/cmsy7.pfb>
-Output written on Poisson2D.pdf (2 pages, 130227 bytes).
+ 30i,17n,35p,1378b,425s stack positions out of 5000i,500n,10000p,200000b,80000s
+ </home/jperdigon/.texlive2019/texmf-var/fonts/pk/lj
+four/jknappen/ec/ecbx1200.600pk> </home/jperdigon/.texlive2019/texmf-var/fonts/
+pk/ljfour/jknappen/ec/ecbx1000.600pk> </home/jperdigon/.texlive2019/texmf-var/f
+onts/pk/ljfour/jknappen/ec/ecbx0700.600pk> </home/jperdigon/.texlive2019/texmf-
+var/fonts/pk/ljfour/jknappen/ec/ecrm1000.600pk> </home/jperdigon/.texlive2019/t
+exmf-var/fonts/pk/ljfour/jknappen/ec/ecbx1440.600pk> </home/jperdigon/.texlive2
+019/texmf-var/fonts/pk/ljfour/jknappen/ec/ecrm1200.600pk> </home/jperdigon/.tex
+live2019/texmf-var/fonts/pk/ljfour/jknappen/ec/ecrm1728.600pk></usr/share/texli
+ve/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb></usr/share/texlive/tex
+mf-dist/fonts/type1/public/amsfonts/cm/cmbx7.pfb></usr/share/texlive/texmf-dist
+/fonts/type1/public/amsfonts/cm/cmex10.pfb></usr/share/texlive/texmf-dist/fonts
+/type1/public/amsfonts/cm/cmmi10.pfb></usr/share/texlive/texmf-dist/fonts/type1
+/public/amsfonts/cm/cmmi12.pfb></usr/share/texlive/texmf-dist/fonts/type1/publi
+c/amsfonts/cm/cmmi5.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfo
+nts/cm/cmmi7.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/
+cmr10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.p
+fb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr5.pfb></usr
+/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr7.pfb></usr/share/t
+exlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/share/texlive
+/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy5.pfb></usr/share/texlive/texmf-
+dist/fonts/type1/public/amsfonts/cm/cmsy7.pfb>
+Output written on Poisson2D.pdf (3 pages, 178824 bytes).
 PDF statistics:
- 187 PDF objects out of 1000 (max. 8388607)
- 60 compressed objects within 1 object stream
+ 242 PDF objects out of 1000 (max. 8388607)
+ 78 compressed objects within 1 object stream
  0 named destinations out of 1000 (max. 500000)
  1 words of extra memory for PDF output out of 10000 (max. 10000000)
 

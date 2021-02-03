@@ -4,11 +4,13 @@
 #include<chrono>
 
 
+/* Fonction récursive pour calculer la FFT d'un vecteur x (algorithme de Cooley-Tukey).
+ */
 inline double ** FFT(std::size_t N, double * x){
 
-  double ** z = new double*[2]; // Complex vector
-  z[0] = new double[N]; // real part
-  z[1] = new double[N]; // Imaginary part
+  double ** z = new double*[2]; // Vecteur complexe
+  z[0] = new double[N]; // partie réelle
+  z[1] = new double[N]; // partie immaginaire
 
   if(N==1){
     z[0][0] = x[0];
@@ -16,16 +18,16 @@ inline double ** FFT(std::size_t N, double * x){
     
   }else{
     
-    double x_even[N/2];
-    double x_odd[N/2];
+    double x_even[N/2]; // Eléments pairs 
+    double x_odd[N/2]; // Eléments impairs
     
     for(std::size_t i =0; i<(N/2); ++i){
       x_even[i] = x[2*i];
       x_odd[i] = x[2*i+1];
     }
 
-    double ** z_even = FFT( N/2, x_even);
-    double ** z_odd = FFT( N/2, x_odd);
+    double ** z_even = FFT( N/2, x_even); // FFT des éléments pairs
+    double ** z_odd = FFT( N/2, x_odd); // FFT des éléments imparis
 
     for(std::size_t k =0; k<(N/2); ++k){
       
@@ -49,6 +51,9 @@ inline double ** FFT(std::size_t N, double * x){
   return z;
   
 }
+
+/* Fonction pour calculer la DST d'un vecteur x à partir de la FFT.
+ */
 
 inline void DST(std::size_t N, double * x){
 
@@ -75,6 +80,9 @@ inline void DST(std::size_t N, double * x){
 
 }
 
+/* Classe pour calculer la solution du problème de Poisson à 2D sur un domaine rectangulaire [0,Lx] x [0,Ly]
+ */
+
 class TwoDPoisson{
 
 public:
@@ -99,7 +107,6 @@ public:
       u_[i] = new double[m_];
       
       for(std::size_t j=0; j<m_; ++j){
-	
 	u_[i][j] = 1.0; 
       }
     }
@@ -233,7 +240,7 @@ private:
 
 
 
-/* Function that computes the analytical solution to the Poisson equation, at the grid point (i,j), with the constant fource f=-1. Since the solution is on a series form, it is truncated at given indexes (M,N).
+/* Solution analytique de l'équation de Poisson  avec  f=-1,  sur le domaine [0,PI] x[0,PI], avec conditions aux bord de Dirichelt u(0,y) = u(x,0) = u(PI,y) = u(x,PI) = 0. Comme la solution est sous la forme d'une série, la solution est tronquée aux termes (M,N);
  */
 
 inline double Utheorique(const std::size_t M, const std::size_t N, const double x, const double y){
