@@ -112,14 +112,17 @@ public:
     // Produit matriciel: SF = S * F
     
     dst_col(u_);
+    
     communication_col(u_);
+    
     MPI_Barrier ( MPI_COMM_WORLD );
-
 
     // Produit matriciel: Ftilde = SFS = SF * S
 
     dst_row(u_);
+    
     communication_row(u_);
+    
     MPI_Barrier ( MPI_COMM_WORLD );
 
     
@@ -131,21 +134,25 @@ public:
     
     for(std::size_t i=0; i<m_; ++i){
       for(std::size_t j=0; j<m_; ++j){
-	u_[i][j] = rhs_factor_ * u_[i][j] / (Ly2* lambda_[i] + Lx2 * lambda_[j]);
+    	u_[i][j] = rhs_factor_ * u_[i][j] / (Ly2* lambda_[i] + Lx2 * lambda_[j]);
       }
     }
     
     // Produit matriciel UtildeS  =  Utilde * S
     
     dst_col(u_);
+   
     communication_col(u_);
+    
     MPI_Barrier (MPI_COMM_WORLD );
 
 
     // Produit matriciel U = S * UtildeS
     
     dst_row(u_);
+   
     communication_row(u_);
+    
     MPI_Barrier ( MPI_COMM_WORLD );
 
   }
@@ -176,6 +183,17 @@ public:
 
   double gety(const std::size_t j){
     return y_[j];
+  }
+
+  void displayU() const{
+   
+    for(std::size_t i=0; i<m_; ++i){
+      for(std::size_t j=0; j<m_; ++j){
+	std::cout << u_[i][j] << " ";
+      }
+      std::cout << std::endl;
+    }
+    
   }
   
   void saveU(const char* filename) const{
@@ -216,44 +234,62 @@ private:
 
   void communication_col(double ** A) const{
 
-    double dataOut[m_*m_];
+    int displs[nProc_];
+    int recv_counts[nProc_];
+
+    for (std::size_t i=0; i<nProc_-1; ++i) {
+      displs[i] = i * M_ * m_;
+      recv_counts[i] = M_ * m_;
+    }
     
-    if (procId_ != (nProc_ -1)){
-      
-      double dataIn[m_*M_];
+    displs[nProc_-1] = (nProc_-1) * M_ * m_;
+    recv_counts[nProc_-1] = (M_+Mr_) * m_;
 
-      for(std::size_t i=0; i<m_; ++i){
-	for(std::size_t j=M_*procId_; j<M_*(procId_+1); ++j){
-	  dataIn[i*m_+j] = A[i][j];
-	}
-      }
-
-      MPI_Allgather(&dataIn, M_*m_, MPI_DOUBLE, &dataOut, m_*m_, MPI_DOUBLE, MPI_COMM_WORLD);
+    double data[m_*m_];
  
-    }else{
-
-      double dataIn[m_*(M_+Mr_)];
-
+    for(std::size_t j=0; j<m_; ++j){
       for(std::size_t i=0; i<m_; ++i){
-	for(std::size_t j=M_*procId_; j<M_*(procId_+1)+Mr_; ++j){
-	 dataIn[i*m_+j] = A[i][j];
-	}
+	data[j*m_+i] = A[i][j];
       }
-
-      MPI_Allgather(&dataIn, m_*(M_+Mr_), MPI_DOUBLE, &dataOut, m_*m_, MPI_DOUBLE, MPI_COMM_WORLD);
-      
     }
-
-    for(std::size_t i=0; i<m_; ++i){
-	for(std::size_t j=0; j<m_; ++j){
-	  A[i][j] = dataOut[i*m_+j]
-	}
+    MPI_Allgatherv(MPI_IN_PLACE, 0, MPI_DATATYPE_NULL, &(data[0]), recv_counts, displs, MPI_DOUBLE, MPI_COMM_WORLD);
+    
+    for(std::size_t j=0; j<m_; ++j){
+      for(std::size_t i=0; i<m_; ++i){
+	 A[i][j] = data[j*m_+i];
+      }
     }
-  
+    
   }
 
   void communication_row(double ** A) const{
-     
+    
+    int displs[nProc_];
+    int recv_counts[nProc_];
+
+    for (std::size_t i=0; i<nProc_-1; ++i) {
+      displs[i] = i * M_ * m_;
+      recv_counts[i] = M_ * m_;
+    }
+    
+    displs[nProc_-1] = (nProc_-1) * M_ * m_;
+    recv_counts[nProc_-1] = (M_+Mr_) * m_;
+
+    double data[m_*m_];
+ 
+    for(std::size_t i=0; i<m_; ++i){
+      for(std::size_t j=0; j<m_; ++j){
+	data[i*m_+j] = A[i][j];
+      }
+    }
+    MPI_Allgatherv(MPI_IN_PLACE, 0, MPI_DATATYPE_NULL, &(data[0]), recv_counts, displs, MPI_DOUBLE, MPI_COMM_WORLD);
+
+    for(std::size_t i=0; i<m_; ++i){
+      for(std::size_t j=0; j<m_; ++j){
+	A[i][j] = data[i*m_+j];
+      }
+    }
+    
   }
   
   void dst_col(double ** A) const{
@@ -356,8 +392,6 @@ inline double Utheorique(const std::size_t M, const std::size_t N, const double 
   return u;  
 }
 
-
-
 int main(int argc, char** argv){
 
   MPI_Status status;
@@ -368,46 +402,40 @@ int main(int argc, char** argv){
   MPI_Comm_rank(MPI_COMM_WORLD, &procId);
   MPI_Comm_size(MPI_COMM_WORLD, &nProc);
 
-  const std::size_t N = 128;
   const double  Lx = M_PI;
   const double  Ly = M_PI;
-  
-  TwoDPoisson U(N, Lx, Ly, procId, nProc);
 
-  /* This part measures the truncature error and the computation time as a function of N, for the poisson equation with constant f=-1. The error should decrease as N^2, and the time should increase as N^2*log(N).
+  /* For a given number of procs, This part measures and save in a file the computation time as a function of N, for the poisson equation with constant f=-1. 
    */
-  
-   // std::ofstream file("errL2.dat" ,std::ios::trunc);
-   // file << "#N errL2 t" << std::endl;
+
+  std::ofstream file("time_parallel.dat" ,std::ios::trunc);
+
+  if(procId == 0){
+    file << "#N  t" << std::endl ; 
+  }
    
-   // for(std::size_t k=3; k<=9; ++k){
+  for(std::size_t k=3; k<=9; ++k){
     
-   //   const std::size_t N = std::pow(2,k);
-   //   const std::size_t M = N-1;
+    const std::size_t N = std::pow(2,k);
 
-   //   std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
-
-   //   TwoDPoisson U(N, Lx, Ly);
-    
-   //   std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
-
-   //   auto duration = std::chrono::duration_cast<std::chrono::microseconds>( t2 - t1 ).count();
+    double times,timee;
+    times = MPI_Wtime();
      
-   //   double L2err = 0;
-   //   for(std::size_t i=0; i<M; ++i){
-   //     for(std::size_t j=0; j<M; ++j){
-   // 	 L2err += std::pow(U.getU(i,j) - Utheorique(200,200,U.getx(i),U.gety(j)),2);
-   //     }
-   //   }
-   //   L2err = sqrt( L2err / (M*M) );
+    TwoDPoisson U(N, Lx, Ly, procId, nProc);
 
-   //   std::cout << "N = " << N << " L2err = " <<  L2err << " Elapsed time = "  << duration  << " microsec " << std::endl;
-   //   file << N  << " " << L2err << " " << duration << std::endl;
+    timee = MPI_Wtime();
+    double time = timee - times;
 
-     
-   // }
+    double res;
+    MPI_Reduce(&time, &res, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
 
-   // file.close();
+    if(procId == 0){
+      std::cout << "N = " << N << " Elapsed time = "  << res   << " s" << std::endl;
+      file << N  << " " << res << std::endl;
+    }   
+  }
+
+  file.close();
 
 
   MPI_Finalize();
