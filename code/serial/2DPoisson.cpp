@@ -265,56 +265,60 @@ int main(int argc, char** argv){
   const double  Lx = M_PI;
   const double  Ly = M_PI;
 
-  /*Measure and save in a file the serial computation time as a function of N, the poisson equation with constant f=-1.
-   */
+  /* // Measure and save in a file the serial computation time as a function of N, the poisson equation with constant f=-1.
+ 
   
-  // std::ofstream file("time_serial.dat" ,std::ios::trunc);
-  // file << "#N t(s)" << std::endl;
+     std::ofstream file("time_serial.dat" ,std::ios::trunc);
+     file << "#N t(s)" << std::endl;
 
-  // for(std::size_t k=3; k<=9; ++k){
+     for(std::size_t k=3; k<=9; ++k){
 
-  //   const std::size_t N = std::pow(2,k);
+     const std::size_t N = std::pow(2,k);
 
-  //   std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
+     std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
 
-  //   TwoDPoisson U(N, Lx, Ly);
+     TwoDPoisson U(N, Lx, Ly);
     
-  //   std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
+     std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
 
-  //   auto duration = std::chrono::duration_cast<std::chrono::microseconds>( t2 - t1 ).count();
+     auto duration = std::chrono::duration_cast<std::chrono::microseconds>( t2 - t1 ).count();
 
-  //   file << N  << " " << duration/1e6 << std::endl;
+     file << N  << " " << duration/1e6 << std::endl;
     
-  // }
-  //  file.close();
+     }
+     file.close();
 
-  /* This part measures the serial truncature error as a function of N, for the poisson equation with constant f=-1. 
-   */
+  */
+
+  /* // This part measures the serial truncature error as a function of N, for the poisson equation with constant f=-1. 
+   
   
-  std::ofstream file("serial_error.dat" ,std::ios::trunc);
-  file << "#N errL2" << std::endl;
+     std::ofstream file("serial_error.dat" ,std::ios::trunc);
+     file << "#N errL2" << std::endl;
    
-  for(std::size_t k=3; k<=9; ++k){
+     for(std::size_t k=3; k<=9; ++k){
     
-    const std::size_t N = std::pow(2,k);
+     const std::size_t N = std::pow(2,k);
     
-    TwoDPoisson U(N, Lx, Ly);
+     TwoDPoisson U(N, Lx, Ly);
    
-    const std::size_t M = N-1;
-    double L2err = 0;
-    for(std::size_t i=0; i<M; ++i){
-      for(std::size_t j=0; j<M; ++j){
-	L2err += std::pow(U.getU(i,j) - Utheorique(200,200,U.getx(i),U.gety(j)),2);
-      }
-    }
-    L2err = sqrt( L2err / (M*M) );
+     const std::size_t M = N-1;
+     double L2err = 0;
+     for(std::size_t i=0; i<M; ++i){
+     for(std::size_t j=0; j<M; ++j){
+     L2err += std::pow(U.getU(i,j) - Utheorique(200,200,U.getx(i),U.gety(j)),2);
+     }
+     }
+     L2err = sqrt( L2err / (M*M) );
 
-    std::cout << "N = " << N << " L2err = " <<  L2err << std::endl;
-    file << N  << " " << L2err  << std::endl;
+     std::cout << "N = " << N << " L2err = " <<  L2err << std::endl;
+     file << N  << " " << L2err  << std::endl;
 
-  }
+     }
 
-  file.close();
+     file.close();
+
+  */
   
   return 0; 
 }

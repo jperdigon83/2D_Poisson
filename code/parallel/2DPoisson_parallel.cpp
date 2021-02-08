@@ -112,10 +112,24 @@ public:
       y_[i] = (i+1)*h_*Ly;
       lambda_[i] = 4*std::pow(sin(0.5*(i+1)*M_PI*h_),2);
       u_[i] = new double[m_];
-      
-      for(std::size_t j=0; j<m_; ++j){
-	u_[i][j] = 1.0; 
-      }
+    }
+
+    
+    for(std::size_t i=0; i<m_; ++i){ 
+      for(std::size_t j=0; j<m_; ++j){	
+	//u_[i][j] = 1.0; // Constant source
+	u_[i][j] = exp(x_[i])*sin(2*M_PI*x_[i])*sin(2*M_PI*y_[j]);
+	//u_[i][j] = sin(2*M_PI*x_[i])*sin(2*M_PI*y_[j]);
+
+	// Point sources
+	/*
+	if(i==m_/4 && j==m_/4){
+	  u_[i][j] = 1;
+	}else if(i==3*m_/4 && j==3*m_/4){
+	  u_[i][j] = -1;
+	}else{u_[i][j] = 0;}
+	*/
+      }    
     }
     
     // Produit matriciel: SF = S * F
@@ -300,6 +314,7 @@ private:
     }
     
   }
+  // Fonction parallélisée pour le calcul de la DST des colonnes de la matrice. Les colonnes sont réparties parmi les processeurs et le reste est pris en charge par le dernier processeur.
   
   void dst_col(double ** A) const{
 
@@ -381,6 +396,8 @@ private:
 };
 
 /* Solution analytique de l'équation de Poisson  avec  f=-1,  sur le domaine [0,PI] x[0,PI], avec conditions aux bord de Dirichelt u(0,y) = u(x,0) = u(PI,y) = u(x,PI) = 0. Comme la solution est sous la forme d'une série, la solution est tronquée aux termes (M,N);
+
+Comme amélioration notable, on peut ultérieurement paralléliser cette fonction ( si le temps le permet :) )
  */
 
 inline double Utheorique(const std::size_t M, const std::size_t N, const double x, const double y){
@@ -408,44 +425,101 @@ int main(int argc, char** argv){
   MPI_Comm_rank(MPI_COMM_WORLD, &procId);
   MPI_Comm_size(MPI_COMM_WORLD, &nProc);
 
+  const double  N = atoi(argv[1]);
+  const double  Lx = atof(argv[2]);
+  const double  Ly = atof(argv[3]);
+
+  TwoDPoisson U(N, Lx, Ly, procId, nProc);
+  if(procId == 0){
+    U.saveU("res.dat");
+  }
+
+
+  /*
+
+  // This part measures the serial truncature error as a function of N, for the poisson equation with constant f=-1. 
+
   const double  Lx = M_PI;
   const double  Ly = M_PI;
-
-  
-
-  /* For a given number of procs, This part measures and save in a file the computation time as a function of N, for the poisson equation with constant f=-1. 
-   */
-
-  std::ofstream file("time_parallel.dat" ,std::ios::trunc);
+   
+  std::ofstream file("error_parallel_P=1.dat" ,std::ios::trunc);
 
   if(procId == 0){
-    file << "#N  t" << std::endl ; 
+  file << "#N errL2" << std::endl;
   }
    
   for(std::size_t k=3; k<=9; ++k){
     
-    const std::size_t N = std::pow(2,k);
+  const std::size_t N = std::pow(2,k);
+    
+  TwoDPoisson U(N, Lx, Ly, procId, nProc);
+   
+  const std::size_t M = N-1;
+  double L2err = 0;
+  for(std::size_t i=0; i<M; ++i){
+  for(std::size_t j=0; j<M; ++j){
+  L2err += std::pow(U.getU(i,j) - Utheorique(200,200,U.getx(i),U.gety(j)),2);
+  }
+  }
+  L2err = sqrt( L2err / (M*M) );
 
-    double times,timee;
-    times = MPI_Wtime();
-     
-    TwoDPoisson U(N, Lx, Ly, procId, nProc);
+  if(procId == 0){
+  std::cout << "N = " << N << " L2err = " <<  L2err << std::endl;
+  file << N  << " " << L2err  << std::endl;
+  }
 
-    timee = MPI_Wtime();
-    double time = timee - times;
-
-    double res;
-    MPI_Reduce(&time, &res, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
-
-    if(procId == 0){
-      std::cout << "N = " << N << " Elapsed time = "  << res   << " s" << std::endl;
-      file << N  << " " << res << std::endl;
-    }   
   }
 
   file.close();
 
+  */
 
+  
+
+
+  
+  
+
+  /* 
+
+  // For a given number of procs, This part measures and save in a file the computation time as a function of N, for the poisson equation with constant f=-1. 
+  
+
+  std::ofstream file("time_parallel.dat" ,std::ios::trunc);
+
+  if(procId == 0){
+  file << "#N  t" << std::endl ; 
+  }
+   
+  for(std::size_t k=3; k<=9; ++k){
+    
+  const std::size_t N = std::pow(2,k);
+
+  double times,timee;
+  times = MPI_Wtime();
+     
+  TwoDPoisson U(N, Lx, Ly, procId, nProc);
+
+  timee = MPI_Wtime();
+  double time = timee - times;
+
+  double res;
+  MPI_Reduce(&time, &res, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+
+  if(procId == 0){
+  std::cout << "N = " << N << " Elapsed time = "  << res   << " s" << std::endl;
+  file << N  << " " << res << std::endl;
+  }   
+  }
+
+  file.close();
+
+  */
+
+
+
+
+  
   MPI_Finalize();
   
   return 0; 

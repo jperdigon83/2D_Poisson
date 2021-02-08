@@ -7,7 +7,7 @@
 \usepackage{geometry}
 \usepackage{amsmath,amsfonts,amssymb}
 
-\geometry{hmargin=2.5cm,vmargin=1.5cm}
+\geometry{hmargin=2.0cm,vmargin=1.5cm}
 \author{J.PERDIGON}
 
 \begin{document}
@@ -32,11 +32,7 @@ On considère le problème de Poisson à 2 dimensions avec des conditions aux bords
   u(\xv) = \alpha(\xv) \ , \ \xv \in \partial \Omega
   \end{split}
 \end{equation}
-Dans un premier temps, on peut réécrire le problème en effectuant les changements de variables
-\begin{equation}
-  \xv = (L_x\xt,L_y\yt) \ , \  \xt = \frac{x}{L_x} \ , \ \yt = \frac{y}{L_y}
-\end{equation}
-L'opérateur de Laplace se réécrit ainsi
+Dans un premier temps, on peut réécrire le problème en effectuant les changements de variables $\xt = \frac{x}{L_x} \ , \ \yt = \frac{y}{L_y}$. L'opérateur de Laplace se réécrit ainsi
 \begin{equation}
   -\Delta_\xv u(\xvt) = \frac{1}{L_x^2} \partial_{\xt}^2 u + \frac{1}{L_y^2} \partial_{\yt}^2 u
 \end{equation}
@@ -67,7 +63,7 @@ Où U et T sont définies comme:
     0 &  \cdots & 0 & -1 & 2 \\
   \end{pmatrix}
 \end{equation}
-Les matrices $T$ et $F$ sont respectivement la matrice de Laplace unidimensionnelle et la matrice associée au membre de droite. A noter que l'implémentation des conditions aux bords a été absorbée dans la définition de la matrice F,
+Les matrices $T$ et $F$ sont respectivement la matrice de Laplace unidimensionnelle et la matrice associée au membre de droite. A noter que écrivant le problème sous cette forme matricielle, l'implémentation des conditions aux bords a été absorbée dans la définition de la matrice F
 \begin{equation}
   F =
   \begin{pmatrix}
@@ -102,11 +98,11 @@ Finalement, on obtient l'équation pour $\Ut$ en utilisant $S^2 = 1/2h \ I$,
 \begin{equation}
    \frac{1}{L_x^2} D \Ut  + \frac{1}{L_y^2} \Ut D = 4 h^4  \Ft \ \leftrightarrow \ \Ut_{i,j} = 4 h^4 \frac{\Ft_{i,j}}{\frac{\lambda_i}{L_x^2} + \frac{\lambda_j}{L_y^2}} = 4 h^4 L_x^2 L_y^2 \frac{\Ft_{i,j}}{L_y^2\lambda_i+ L_x^2\lambda_j}
 \end{equation}
-Ainsi, en se donnant une matrice $F$ de taille $m \times m$, il faut effectuer 4 produits matriciels ($4 m^3$ opérations) et un produit de matrices terme à terme (produit d'Hadamard en $m^2$ opérations) pour obtenir la solution $U$. La solution du problème de Poisson peut être calculée $\mathcal{O}(n^3)$. Ce nombre peut-être réduit, en remarquant que le produit matriciel de la matrice $S$ avec une matrice $A$ correspond en réalité à la $DST$ des colonnes de cette même matrice $A$. La $DST$ d'un vecteur $\mathbf{v}$ de taille $N$ peut être déduite de la $FFT$ du vecteur $\mathbf{v_L}$ de taille $2N+2$ selon
+Ainsi, en se donnant une matrice $F$ de taille $m \times m$, il faut effectuer 4 produits matriciels ($4 m^3$ opérations) et un produit de matrices terme à terme (produit d'Hadamard en $m^2$ opérations) pour obtenir la solution $U$. La solution du problème de Poisson peut être calculée $\mathcal{O}(n^3)$. Ce nombre peut-être réduit, en remarquant que le produit matriciel de la matrice $S$ avec une matrice $A$ correspond en réalité à la $DST$ des colonnes de cette même matrice $A$. La $DST$ d'un vecteur $\mathbf{v}$ de taille $m$ peut être déduite de la $FFT$ du vecteur $\mathbf{v_L}$ de taille $2m+2$ selon
 \begin{equation}
-  DST(\mathbf{v})_k = - \frac{1}{2} \ Imag\left( FFT(\mathbf{v_L})_{k+1} \right) \ , \ \mathbf{v_L} = [0, v_0, v_1, ..., v_{N-1}, 0, -v_{N-1}, -v_{N-2}, ..., -v_{0}]^T \ , \ k=0, 1, .., N-1
+  DST(\mathbf{v})_k = - \frac{1}{2} \ Imag\left( FFT(\mathbf{v_L})_{k+1} \right) \ , \ \mathbf{v_L} = [0, v_0, v_1, ..., v_{m-1}, 0, -v_{m-1}, -v_{m-2}, ..., -v_{0}]^T \ , \ k=0, 1, .., m-1
 \end{equation}
-De cette manière, la DST se calcule en $\mathcal{O}(N\ln(N))$ opérations. La solution du problème de Poisson est ainsi calculée en $n^2\ln(n)$.
+De cette manière, la DST se calcule en $\mathcal{O}(m\ln(m))$ opérations. La solution du problème de Poisson est ainsi calculée en $\mathcal{O}(n^2\ln(n))$.
 
 \section{Implementation numérique}
 
@@ -120,13 +116,58 @@ L'implémentation se fait au sein d'une classe ``TwoDPoisson'' qui prend en argum
 \end{itemize}
 Les produits matriciels $S \ F$ et $S \ \tilde{U}$ sont calculés à l'aide de la fonction de classe privée $dst\_col()$ qui effectue respectivement la $DST$ des colonnes de $F$ et $\tilde{U}$. Les produits matriciels $F_1 \ S$ et $U_1 \ S$ sont quant à eux calculés à l'aide de la fonction $dst\_row()$ qui effectue la DST des lignes de $F_1$ et $U_1$.
 
-\subsection{Parallélisation avec MPI}
+\subsection{Parallélisation avec MPI}\label{MPI}
 
-On veut à présent paralléliser la classe ``TwoDPoisson''. La tâche que l'on souhaite paralléliser est le calcul de de la $DST$ sur les colonnes/lignes de la matrice considérée. Soit $P$ le nombre de processeurs alloué au calcul; le nombre de colonnes/lignes assigné à chaque processeur sur lesquelles celui-ci calculera la $DST$ est $M= m / P$. Le reste de colonnes/lignes $M_r = m\%P$ est pris en charge par le dernier processeur $P-1$. Afin d'optimiser le nombre de communications entre les processeurs ( au détriment de la mémoire), on opte pour la stratégie suivante; chaque processeur $p=0,...,P-1$ possède une version de la matrice dont on veut calculer la DST des colonnes/lignes, et il ne calcule cependant que la DST des colonnes/lignes associées aux indices $Mp$ à $M(p+1)$ (le dernier processeur va de $M(P-1)$ à $MP + M_r$). Chaque processeur calcule donc la DST d'une sous-partie de la matrice. Finalement la matrice est mise à jour dans son ensemble, grâce aux fonctions ``communication\_col()'' et ``communication\_row()'' où chaque processeur va communiquer aux autres processeurs la sous-partie considérée (via la fonction $MPI\_Allgatherv()$. Une barrière $MPI\_Barrier()$ est ensuite ajoutée en sécurité afin de s'assurer que l'ensemble des versions soit mise à jour et identique, avant d'effectuer d'autre produit matriciels.
+On veut à présent paralléliser la classe ``TwoDPoisson''. La tâche que l'on souhaite paralléliser est le calcul de de la $DST$ sur les colonnes/lignes de la matrice considérée. Soit $P$ le nombre de processeurs alloué au calcul; le nombre de colonnes/lignes assigné à chaque processeur sur lesquelles celui-ci calculera la $DST$ est $M= m / P$. Le reste de colonnes/lignes $M_r = m\%P$ est pris en charge par le dernier processeur $P-1$. Afin d'optimiser le nombre de communications entre les processeurs (au détriment de la mémoire), on opte pour la stratégie suivante: chaque processeur $p=0,...,P-1$ possède une version de la matrice dont on veut calculer la DST des colonnes/lignes dont il ne calcule cependant que la DST des colonnes/lignes associées aux indices $Mp$ à $M(p+1)$ (le dernier processeur va de $M(P-1)$ à $MP + M_r$). Se faisant, chaque processeur calcule donc la DST d'une sous-partie de la matrice. Finalement la matrice sur chaque processeur est mise à jour dans son ensemble, grâce aux fonctions ``communication\_col()'' et ``communication\_row()'' où chaque processeur va communiquer aux autres processeurs la sous-partie qu'il aura calculé (via la fonction $MPI\_Allgatherv()$). Une barrière $MPI\_Barrier()$ est ensuite ajoutée en sécurité afin d'attendre que la matrice soit mise à jour sur chaque processeur, avant de passer à d'autres calculs.
 
-\section{Cas test: $-\Delta_\xv u(\xv) = 1 \ , \ \alpha(\xv) = 0$}
+\section{Cas test}
 
+Dans un premier temps, on se propose de tester le code dans le cas simple
+\begin{equation}
+  \begin{split}
+  -\Delta_\xv u(\xv) = 1 \ , \ \xv \in \Omega = (0,\pi) \times (0,\pi) \\
+  u(\xv) = 0  \ , \ \xv \in \partial \Omega
+  \end{split}
+\end{equation}
+La solution $u(x,y)$ s'écrit sous la forme
+\begin{equation}
+  u(x,y) = \sum_{k=1}^{\infty}\sum_{l=1}^{\infty} U_{kl} \sin(k x) \sin(l y) \ , \ U_{kl} = 4 \frac{(1-(-1)^k)(1-(-1)^l)}{(k^2+l^2)k l \pi^2}
+\end{equation}
+Afin de tester la validité du programme, on se proposer de calculer une estimation de l'erreur, noté $\epsilon_2$ et défini par
+\begin{equation}
+  \epsilon_2 = \frac{1}{m}\left[ \sum_{i=1}^{m}\sum_{j=1}^{m} \left( u(x_i,y_j) - u_{i,j}\right)^2 \right]^\frac{1}{2}
+\end{equation}
+$\epsilon_2$ représente la norme L2 de la différence entre $u(x_i,y_j)$ et $u_{i,j}$. Puisque l'on a approximé l'opérateur Laplacien par un opérateur de différences finies d'ordre $2$, on s'attend à ce que $\epsilon_2$ décroisse en $n^2$ avec avec le nombre de points $n$. Concernant le temps de calcul $T_1$, comme nous l'avons vu, on s'attend à ce qu'il croisse en $n^2\ln(n)$ avec $n$. En Fig.\ref{fig:1}, on représente $\epsilon_2$ et $T_1$ en fonction de $n$. Puisque $u(x,y)$ s'exprime comme une somme infinies de termes, on coupe en pratique la série de manière à ce que l'erreur engendrée soit toujours dominée par l'erreur de troncature $\epsilon_2$.
 
+\begin{figure}[!h]
+  \centering
+  \includegraphics[width=17cm]{images/Fig1.pdf}
+  \caption{$\epsilon_2$ et $T_1$ en fonction du nombre de points $n$, avec $P=1$. Les courbes en pointillés représentent le comportement analytique attendu.}
+  \label{fig:1}
+\end{figure}
+
+\vspace{0.5cm}
+
+On se penche à présent sur les performances de la parallélisation. Puisque notre problème est calculé sur l'ensemble des processeurs (cela découle de  notre stratégie de parallélisation voir Sect.~\ref{MPI}), on définit le temps de calcul du problème parallélisé $T_P$ comme maximum des temps sur chaque processeurs ($T_P = max_P(T_p)$). En Fig.~\ref{fig:2} on représente le facteur d'accélération $T_1 \ / \ T_P$ en fonction de $P$, pour différents $n$. La courbe en pointillées représente le comportement idéal où il n'existe pas de surcoûts liés aux communications entre les processeurs ($T_1 \ / \ T_P = n^2 \log(n) \ / \ (n^2\log(n)/P) = P$). Sur le panneau de gauche, on représente les données expérimentales. On remarque que plus le nombre de processeurs $P$ est grand plus on s'éloigne de la courbe idéale, ce qui peut s'expliquer par le fait qu'en augmentant le nombre de processeurs, on augmente le nombre de communications et donc le surcoût. De plus, on constate également que plus $n$ est grand, plus on se rapproche de la courbe idéale. Là encore, cela s'explique par le fait qu'en augmentant $n$, on diminue en proportion les communications entre processeurs par rapport à la charge de travail. Ces conclusions sont résumées dans le panneau de droite, où l'on représente le facteur d'amplification théorique, en assumant que les surcoûts de communication sont de la forme $ \propto (P-1)n^2$. Dans ce cas, un processeur quelconque communique aux autres processeurs une matrice de taille $n \times n$ et le facteur s'exprime comme
+\begin{equation}
+  \frac{T_1}{T_P} = \frac{n^2 \log(n)}{\frac{1}{P}n^2 \log(n) + A (P-1) n^2}
+\end{equation}
+Où $A$ est une constante de proportionnalité quelconque.
+
+\begin{figure}[!h]
+  \centering
+  \includegraphics[width=17cm]{images/Fig2.pdf}
+  \caption{Le facteur d'accélération $T_1 \ / \ T_P$ en fonction de $P$, pour différents $n$. (Gauche) Données expérimentales. (Droite) Les courbes théoriques en assumant un surcoût de communication $\propto (P-1) n^2$. Les courbes en pointillées représentent le comportement idéal où il n'existe pas de surcoûts liés aux communications entre les processeurs.}
+  \label{fig:2}
+\end{figure}
+
+\section{Quelques exemples}
+\begin{figure}[!h]
+  \centering
+  \includegraphics[width=17cm]{images/Fig3.pdf}
+  \caption{Profil normalisé de l'approximation de $u$, résultant du code, en fonction des coordonnées d'espace $x, y \in \Omega = (0,1) \times (0,1)$, pour $n = 512$. En haut à gauche: $f(x,y)=1$, en haut à droite $f(x,y) =\sin(2\pi x) \sin(2\pi y)$, en bas à gauche $f(x,y) = \exp(x) \sin(2\pi x) \sin(2\pi y)$, en bas à droite $f(x,y) = \delta(x-0.25,y-0.25) - \delta(x-0.75,y-0.75)$.}
+  \label{fig:2}
+\end{figure}
 
 
 \end{document}
